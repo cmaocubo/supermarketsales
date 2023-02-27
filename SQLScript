@@ -1,0 +1,78 @@
+SELECT *
+FROM dbo.SM_Sales
+
+-- Remove duplicates
+SELECT DISTINCT *
+FROM dbo.SM_Sales
+	-- There are no duplicates in this table
+
+-- Change date type from datetime to date
+ALTER TABLE dbo.SM_Sales 
+ALTER COLUMN Date DATE
+
+-- Change time type from datetime to time
+ALTER TABLE dbo.SM_Sales 
+ALTER COLUMN Time TIME
+
+							/* Data exploration for future data visualization */
+
+-- What is the Product line that sells the most?
+SELECT [Product line], SUM([gross income]) AS Total_Gross_Income
+FROM SM_Sales
+GROUP BY [Product line]
+ORDER BY Total_Gross_Income DESC
+	-- Food and beverages sell the most, while health and beauty present the lowest gross income
+
+-- What is the gender of each customer type, i.e., are there more males or females with a membership?
+SELECT Gender, [Customer type], COUNT([Customer type]) AS Quantity
+FROM dbo.SM_Sales
+GROUP BY Gender, [Customer type]
+	-- There are roughly the same amount of male and female customers with and without a membership
+
+-- But, of all this customers, is there a customer type that spends the most in the supermarket?
+SELECT [Customer type], SUM([gross income]) AS Total_Gross_Income
+FROM dbo.SM_Sales
+GROUP BY [Customer type]
+ORDER BY Total_Gross_Income DESC
+	-- Members spend more money than "Normal" customers
+
+-- And in respect of male and female, member and normal customers?
+SELECT Gender, [Customer type], COUNT([Customer type]) AS Quantity, SUM(Total) AS Total
+FROM dbo.SM_Sales
+GROUP BY Gender, [Customer type]
+ORDER BY Total DESC
+	-- Females spend more than males, even without a membership
+
+-- Are the clients overall satisfied with the supermarket experience?
+SELECT Gender, [Customer type], COUNT(Gender) AS Total,
+CASE
+	WHEN Rating < 4 THEN '1-4'
+	WHEN Rating < 7 THEN '4-7'
+	WHEN Rating < 9 THEN '7-9'
+	ELSE '9-10'
+END AS Customer_Experience
+FROM dbo.SM_Sales
+GROUP BY Gender, [Customer type], Rating
+ORDER BY Rating DESC
+	-- There are no ratings below 4, which is good. However, the majority are between 4-7, hence there is still space for improvement
+
+-- The customers that spend the most are the ones giving the highest ratings?
+SELECT Total, AVG(Rating)
+FROM dbo.SM_Sales
+GROUP BY Total
+ORDER BY Total DESC
+	-- There is no correlation between the two
+
+-- Filtering the table by Product line
+CREATE PROCEDURE Product_Line AS
+SELECT *
+FROM dbo.SM_Sales
+
+ALTER PROCEDURE [dbo].[Product_Line]
+@Line varchar(250)
+AS
+SELECT *
+FROM dbo.SM_Sales
+WHERE [Product line] = @Line
+
+EXEC Product_Line 'Home and lifestyle'
